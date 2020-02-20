@@ -1,9 +1,9 @@
 'use strict'
 
-const SRC_LB_ARN = process.env.SRC_LB_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:loadbalancer/app/cloudkong-xyz/dae92038e098fc53'
 const SRC_LB_LISTENER_ARN = process.env.SRC_LB_LISTENER_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795'
 const DEST_LB_LISTENER_ARN = process.env.DEST_LB_LISTENER_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener/app/demo-lb/48872b1662c5d6ff/ca45dc835b7cb732'
-const DEST_TG_PREFIX = process.env.DEST_TG_PREFIX || 'demo-tg'
+const DEST_LB_ARN = process.env.DEST_LB_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:loadbalancer/app/demo-lb/48872b1662c5d6ff'
+const DEST_TG_PREFIX = process.env.DEST_TG_PREFIX || 'copied-tg'
 const PAGE_SIZE = 10
 const AWS_REGION = process.env.AWS_REGION || 'cn-northwest-1'
 const AWS_PROFILE = process.env.AWS_PROFILE
@@ -26,26 +26,25 @@ const elbv2 = new AWS.ELBv2()
 // Auto created target groups
 const newTgs = []
 
-try {
-  
-  // copyLoadBalancer(SRC_LB_ARN, 'demo-lb').then(lb => {
-  //   console.log(`create new load balancer: ${lb.LoadBalancerArn}`)
-  //   console.log(lb)
-  // })
-
-  
-  copyRules(SRC_LB_LISTENER_ARN, DEST_LB_LISTENER_ARN, DEST_TG_PREFIX).then(rules => {
-
-console.log(`copied rules...\n${JSON.stringify(rules)}\n\n`)
-
+if (DEST_LB_ARN) {
+  // Option 1: copy listener and copy rules
+  copyListener(SRC_LB_LISTENER_ARN, DEST_LB_ARN).then(listner => {
+    console.log(`created listener...\n${JSON.stringify(listner)}\n\n`)
+    return copyRules(SRC_LB_LISTENER_ARN, listner.ListenerArn, DEST_TG_PREFIX)
+  }).then(rules => {
+    console.log(`copied rules...\n${JSON.stringify(rules)}\n\n`)
   }).catch(err => {
     console.error(err)
   })
-
-
-} catch(e) {
-  console.error(e)
+} else if (DEST_LB_LISTENER_ARN) {
+  // Option 2: copy rules only
+  copyRules(SRC_LB_LISTENER_ARN, DEST_LB_LISTENER_ARN, DEST_TG_PREFIX).then(rules => {
+    console.log(`copied rules...\n${JSON.stringify(rules)}\n\n`)
+  }).catch(err => {
+    console.error(err)
+  })
 }
+
 
 /**
  * Copy an existing Load Balaner and create a new Load Balancer
@@ -134,9 +133,8 @@ async function copyTargetGroup(src_tg_name, dest_tg_prefix) {
  * Copy the rules from one LB listener to another LB listner. It will also automatically create target groups using the prefix.
  * @param {String} src_lb_listener_arn Source LB listener ARN
  * @param {*} dest_lb_listener_arn Destination LB listener ARN
- * @param {*} dest_tg_prefix Destintion Target Group Prefix
  */
-async function copyRules(src_lb_listener_arn, dest_lb_listener_arn, dest_tg_prefix) {
+async function copyRules(src_lb_listener_arn, dest_lb_listener_arn) {
 
   let hasMoreRule = true
   let marker = null
@@ -167,12 +165,12 @@ console.log(`src rule...\n${JSON.stringify(src_rule)}\n\n`)
 
       // Find the related target group
       const existingTg = newTgs.find(tg => {
-        return tg.TargetGroupName === `${dest_tg_prefix}-${targetGroupName}`
+        return tg.TargetGroupName === `${DEST_TG_PREFIX}-${targetGroupName}`
       })
 
       // if not exist, create a new target group
       if (!existingTg) {
-        const newTg = await copyTargetGroup(targetGroupName, dest_tg_prefix)
+        const newTg = await copyTargetGroup(targetGroupName, DEST_TG_PREFIX)
 console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
         newTgs.push(newTg)
         destTargetGroupArn = newTg.TargetGroupArn
@@ -217,37 +215,54 @@ console.log(`created new rule...\n${JSON.stringify(create_rule_res.Rules[0])}\n\
   return dest_rules
 }
 
-
+/**
+ * Copy an existing listner configuration to Load Balancer
+ * @param {String} src_lb_listener_arn 
+ * @param {String} dest_lb_arn 
+ */
 async function copyListener(src_lb_listener_arn, dest_lb_arn) {
-  const listeners_res = await elbv2.describeListeners({
-    ListenerArns: [
-      src_lb_listener_arn
-    ]
-  }).promise()
-
+  
+  const listeners_res = await elbv2.describeListeners({ ListenerArns: [ src_lb_listener_arn] }).promise()
   const listner = listeners_res.Listeners[0]
-  if (listner.DefaultActions[0].Type === 'forward') {
-    defaultTargetGroupName = listner.DefaultActions[0].TargetGroupArn.split('/')[1]
+  let newListnerParam = listner
+  Object.assign(newListnerParam, listner)
+
+  console.log(`listener...\n${JSON.stringify(listner)}\n\n`)
+
+  if (listner.DefaultActions[0].Type === 'forward') {         // Deafult Action: forward
+    let destTargetGroupArn = ''
+    const targetGroupName = listner.DefaultActions[0].TargetGroupArn.split('/')[1]
     // Find the related target group
     const existingTg = newTgs.find(tg => {
-      return tg.TargetGroupName === `${dest_tg_prefix}-${targetGroupName}`
+      return tg.TargetGroupName === `${DEST_TG_PREFIX}-${targetGroupName}`
     })
 
     // if not exist, create a new target group
     if (!existingTg) {
-      const newTg = await copyTargetGroup(targetGroupName, dest_tg_prefix)
-console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
+      const newTg = await copyTargetGroup(targetGroupName, DEST_TG_PREFIX)
+      console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
       newTgs.push(newTg)
       destTargetGroupArn = newTg.TargetGroupArn
     } else {
       destTargetGroupArn = existingTg.TargetGroupArn
-    }    
+    }
+    
+    newListnerParam.DefaultActions[0].TargetGroupArn = destTargetGroupArn
+
+    if (newListnerParam.DefaultActions[0].ForwardConfig) {
+      delete newListnerParam.DefaultActions[0].ForwardConfig
+    }
+    
+  } else if (listner.DefaultActions[0].Type === 'fixed-response'){    // Default action: fixed-response
+    
+  } else if (listner.DefaultActions[0].Type === 'redirect') {         // Default action: redirect
+
+  } else {
+    throw new Error(`unsupported default action...\n${JSON.stringify(listner)}\n\n`)
   }
 
-  let newListnerParam = {}
-  Object.assign(newListnerParam, listner)
   delete newListnerParam.ListenerArn
-
-
-
+  newListnerParam.LoadBalancerArn = dest_lb_arn
+  const create_listener_res = await elbv2.createListener(newListnerParam).promise()
+  return create_listener_res.Listeners[0]
 }
