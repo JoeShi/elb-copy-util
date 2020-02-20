@@ -145,17 +145,121 @@
             "IsDefault": false
         },
         {
-            "RuleArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener-rule/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795/2b44441df1880e66",
-            "Priority": "default",
-            "Conditions": [],
+            "RuleArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener-rule/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795/2a45b01eb072aaae",
+            "Priority": "6",
+            "Conditions": [
+                {
+                    "Field": "path-pattern",
+                    "Values": [
+                        "/wechat/*"
+                    ],
+                    "PathPatternConfig": {
+                        "Values": [
+                            "/wechat/*"
+                        ]
+                    }
+                }
+            ],
+            "Actions": [
+                {
+                    "Type": "forward",
+                    "TargetGroupArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:targetgroup/yima-v1/4628bda8980e8793",
+                    "Order": 1,
+                    "ForwardConfig": {
+                        "TargetGroups": [
+                            {
+                                "TargetGroupArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:targetgroup/yima-v1/4628bda8980e8793",
+                                "Weight": 1
+                            }
+                        ],
+                        "TargetGroupStickinessConfig": {
+                            "Enabled": false
+                        }
+                    }
+                }
+            ],
+            "IsDefault": false
+        },
+        {
+            "RuleArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener-rule/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795/11340f22e70fb309",
+            "Priority": "7",
+            "Conditions": [
+                {
+                    "Field": "path-pattern",
+                    "Values": [
+                        "/",
+                        "/download"
+                    ],
+                    "PathPatternConfig": {
+                        "Values": [
+                            "/",
+                            "/download"
+                        ]
+                    }
+                }
+            ],
+            "Actions": [
+                {
+                    "Type": "redirect",
+                    "Order": 1,
+                    "RedirectConfig": {
+                        "Protocol": "HTTPS",
+                        "Port": "443",
+                        "Host": "#{host}",
+                        "Path": "/#{path}",
+                        "Query": "#{query}",
+                        "StatusCode": "HTTP_301"
+                    }
+                }
+            ],
+            "IsDefault": false
+        },
+        {
+            "RuleArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener-rule/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795/bbe63fb2ca13bd43",
+            "Priority": "8",
+            "Conditions": [
+                {
+                    "Field": "path-pattern",
+                    "Values": [
+                        "/pc/dashboard*",
+                        "/api/web/*"
+                    ],
+                    "PathPatternConfig": {
+                        "Values": [
+                            "/pc/dashboard*",
+                            "/api/web/*"
+                        ]
+                    }
+                }
+            ],
             "Actions": [
                 {
                     "Type": "fixed-response",
                     "Order": 1,
                     "FixedResponseConfig": {
-                        "MessageBody": "Unknown host name",
+                        "MessageBody": "hello",
                         "StatusCode": "503",
                         "ContentType": "text/plain"
+                    }
+                }
+            ],
+            "IsDefault": false
+        },
+        {
+            "RuleArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener-rule/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795/2b44441df1880e66",
+            "Priority": "default",
+            "Conditions": [],
+            "Actions": [
+                {
+                    "Type": "redirect",
+                    "Order": 1,
+                    "RedirectConfig": {
+                        "Protocol": "HTTPS",
+                        "Port": "443",
+                        "Host": "#{host}",
+                        "Path": "/#{path}",
+                        "Query": "#{query}",
+                        "StatusCode": "HTTP_301"
                     }
                 }
             ],

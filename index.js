@@ -151,12 +151,30 @@ async function copyRules(src_lb_listener_arn, dest_lb_listener_arn) {
     }
   }
 
-console.log(`rules in source lb listener...\n${JSON.stringify(src_rules)}\n\n`)
+  console.log(`rules in source lb listener...\n${JSON.stringify(src_rules)}\n\n`)
 
   for (let i = 0; i < src_rules.length; i++) {
     const src_rule = src_rules[i]
+    if (src_rule.IsDefault === true) { continue } // skip the default rule
+    
+    console.log(`src rule...\n${JSON.stringify(src_rule)}\n\n`)
+    let newRuleParam = {}
+    Object.assign(newRuleParam, src_rule)
 
-console.log(`src rule...\n${JSON.stringify(src_rule)}\n\n`)
+    delete newRuleParam.RuleArn
+    delete newRuleParam.IsDefault
+    if (newRuleParam.Actions[0].ForwardConfig) {
+      delete newRuleParam.Actions[0].ForwardConfig
+    }
+
+    if (newRuleParam.Conditions[0].HostHeaderConfig) {
+      delete newRuleParam.Conditions[0].HostHeaderConfig
+    }
+
+    if (newRuleParam.Conditions[0].PathPatternConfig) {
+      delete newRuleParam.Conditions[0].PathPatternConfig
+    }
+    newRuleParam.ListenerArn = dest_lb_listener_arn
 
     // Handle non-default and forward action
     if (src_rule.Actions[0].Type === 'forward' && src_rule.IsDefault === false) {                               
@@ -171,45 +189,27 @@ console.log(`src rule...\n${JSON.stringify(src_rule)}\n\n`)
       // if not exist, create a new target group
       if (!existingTg) {
         const newTg = await copyTargetGroup(targetGroupName, DEST_TG_PREFIX)
-console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
+        console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
         newTgs.push(newTg)
         destTargetGroupArn = newTg.TargetGroupArn
       } else {
         destTargetGroupArn = existingTg.TargetGroupArn
       }
-
-      const newRuleParam = {}
-      Object.assign(newRuleParam, src_rule)
-
-      delete newRuleParam.RuleArn
-      delete newRuleParam.IsDefault
-      
-      // Delete the config
-      if (newRuleParam.Actions[0].ForwardConfig) {
-        delete newRuleParam.Actions[0].ForwardConfig
-      }
-
-      if (newRuleParam.Conditions[0].HostHeaderConfig) {
-        delete newRuleParam.Conditions[0].HostHeaderConfig
-      }
-
-      if (newRuleParam.Conditions[0].PathPatternConfig) {
-        delete newRuleParam.Conditions[0].PathPatternConfig
-      }
       
       newRuleParam.Actions[0].TargetGroupArn = destTargetGroupArn
-      newRuleParam.ListenerArn = dest_lb_listener_arn
-
-console.log(`new rule param...\n${JSON.stringify(newRuleParam)}\n\n`)
-
-      const create_rule_res = await elbv2.createRule(newRuleParam).promise()
-console.log(`created new rule...\n${JSON.stringify(create_rule_res.Rules[0])}\n\n`)
-      dest_rules.push(create_rule_res.Rules[0])
-
+    } else if (src_rule.Actions[0].Type === 'redirect' && src_rule.IsDefault === false) {
+      
+    } else if (src_rule.Actions[0].Type === 'fixed-response' && src_rule.IsDefault === false) {
+      
     } else {
-      // TODO: handle Action which is not forward
-
+      console.log(`unsupported src rule action type...\n${JSON.stringify(src_rule)}\n\n`)
     }
+    
+    // create new rule
+    console.log(`new rule param...\n${JSON.stringify(newRuleParam)}\n\n`)
+    const create_rule_res = await elbv2.createRule(newRuleParam).promise()
+    console.log(`created new rule...\n${JSON.stringify(create_rule_res.Rules[0])}\n\n`)
+    dest_rules.push(create_rule_res.Rules[0])
   }
 
   return dest_rules
