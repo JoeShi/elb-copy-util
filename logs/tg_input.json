@@ -1,0 +1,18 @@
+{
+    "Name": "",
+    "Protocol": "HTTPS",
+    "Port": 0,
+    "VpcId": "",
+    "HealthCheckProtocol": "HTTPS",
+    "HealthCheckPort": "",
+    "HealthCheckEnabled": true,
+    "HealthCheckPath": "",
+    "HealthCheckIntervalSeconds": 0,
+    "HealthCheckTimeoutSeconds": 0,
+    "HealthyThresholdCount": 0,
+    "UnhealthyThresholdCount": 0,
+    "Matcher": {
+        "HttpCode": ""
+    },
+    "TargetType": "instance"
+}

@@ -1,0 +1,106 @@
+{
+    "ListenerArn": "",
+    "Conditions": [
+        {
+            "Field": "",
+            "Values": [
+                ""
+            ],
+            "HostHeaderConfig": {
+                "Values": [
+                    ""
+                ]
+            },
+            "PathPatternConfig": {
+                "Values": [
+                    ""
+                ]
+            },
+            "HttpHeaderConfig": {
+                "HttpHeaderName": "",
+                "Values": [
+                    ""
+                ]
+            },
+            "QueryStringConfig": {
+                "Values": [
+                    {
+                        "Key": "",
+                        "Value": ""
+                    }
+                ]
+            },
+            "HttpRequestMethodConfig": {
+                "Values": [
+                    ""
+                ]
+            },
+            "SourceIpConfig": {
+                "Values": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "Priority": 0,
+    "Actions": [
+        {
+            "Type": "forward",
+            "TargetGroupArn": "",
+            "AuthenticateOidcConfig": {
+                "Issuer": "",
+                "AuthorizationEndpoint": "",
+                "TokenEndpoint": "",
+                "UserInfoEndpoint": "",
+                "ClientId": "",
+                "ClientSecret": "",
+                "SessionCookieName": "",
+                "Scope": "",
+                "SessionTimeout": 0,
+                "AuthenticationRequestExtraParams": {
+                    "KeyName": ""
+                },
+                "OnUnauthenticatedRequest": "authenticate",
+                "UseExistingClientSecret": true
+            },
+            "AuthenticateCognitoConfig": {
+                "UserPoolArn": "",
+                "UserPoolClientId": "",
+                "UserPoolDomain": "",
+                "SessionCookieName": "",
+                "Scope": "",
+                "SessionTimeout": 0,
+                "AuthenticationRequestExtraParams": {
+                    "KeyName": ""
+                },
+                "OnUnauthenticatedRequest": "allow"
+            },
+            "Order": 0,
+            "RedirectConfig": {
+                "Protocol": "",
+                "Port": "",
+                "Host": "",
+                "Path": "",
+                "Query": "",
+                "StatusCode": "HTTP_302"
+            },
+            "FixedResponseConfig": {
+                "MessageBody": "",
+                "StatusCode": "",
+                "ContentType": ""
+            },
+            "ForwardConfig": {
+                "TargetGroups": [
+                    {
+                        "TargetGroupArn": "",
+                        "Weight": 0
+                    }
+                ],
+                "TargetGroupStickinessConfig": {
+                    "Enabled": true,
+                    "DurationSeconds": 0
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,38 @@
+{
+    "LoadBalancers": [
+        {
+            "LoadBalancerArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:loadbalancer/app/cloudkong-xyz/dae92038e098fc53",
+            "DNSName": "cloudkong-xyz-184676259.cn-northwest-1.elb.amazonaws.com.cn",
+            "CanonicalHostedZoneId": "Z3BX2TMKNYI13Y",
+            "CreatedTime": "2018-11-25T03:29:44+00:00",
+            "LoadBalancerName": "cloudkong-xyz",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-0097dabcc3e21d492",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "cn-northwest-1a",
+                    "SubnetId": "subnet-076f840412ceaf13b",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "cn-northwest-1c",
+                    "SubnetId": "subnet-07d6463c1c0587ea0",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "cn-northwest-1b",
+                    "SubnetId": "subnet-0a8c42a44c5577db1",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-03605f3382953f694"
+            ],
+            "IpAddressType": "ipv4"
+        }
+    ]
+}

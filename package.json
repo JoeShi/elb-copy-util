@@ -1,0 +1,14 @@
+{
+  "name": "elb-copy",
+  "version": "1.0.0",
+  "description": "copy elb",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Joe SHI <qiaoshi@amazon.com>",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.622.0"
+  }
+}
