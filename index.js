@@ -3,17 +3,24 @@
 const SRC_LB_ARN = process.env.SRC_LB_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:loadbalancer/app/cloudkong-xyz/dae92038e098fc53'
 const SRC_LB_LISTENER_ARN = process.env.SRC_LB_LISTENER_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795'
 const DEST_LB_LISTENER_ARN = process.env.DEST_LB_LISTENER_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener/app/demo-lb/48872b1662c5d6ff/ca45dc835b7cb732'
-const DEST_TG_PREFIX = process.env.TG_PREFIX || 'demo-tg'
+const DEST_TG_PREFIX = process.env.DEST_TG_PREFIX || 'demo-tg'
 const PAGE_SIZE = 10
 const AWS_REGION = process.env.AWS_REGION || 'cn-northwest-1'
-const AWS_PROFILE = process.env.AWS_PROFILE || 'zhy'
+const AWS_PROFILE = process.env.AWS_PROFILE
 
 const AWS = require('aws-sdk')
-const credentials = new AWS.SharedIniFileCredentials({profile: AWS_PROFILE})
+
 AWS.config.update({
-  region: AWS_REGION,
-  credentials: credentials
+  region: AWS_REGION
 })
+
+if (AWS_PROFILE) {
+  const credentials = new AWS.SharedIniFileCredentials({profile: AWS_PROFILE})
+  AWS.config.update({
+    credentials: credentials
+  })
+}
+
 const elbv2 = new AWS.ELBv2()
 
 // Auto created target groups
@@ -208,4 +215,39 @@ console.log(`created new rule...\n${JSON.stringify(create_rule_res.Rules[0])}\n\
   }
 
   return dest_rules
+}
+
+
+async function copyListener(src_lb_listener_arn, dest_lb_arn) {
+  const listeners_res = await elbv2.describeListeners({
+    ListenerArns: [
+      src_lb_listener_arn
+    ]
+  }).promise()
+
+  const listner = listeners_res.Listeners[0]
+  if (listner.DefaultActions[0].Type === 'forward') {
+    defaultTargetGroupName = listner.DefaultActions[0].TargetGroupArn.split('/')[1]
+    // Find the related target group
+    const existingTg = newTgs.find(tg => {
+      return tg.TargetGroupName === `${dest_tg_prefix}-${targetGroupName}`
+    })
+
+    // if not exist, create a new target group
+    if (!existingTg) {
+      const newTg = await copyTargetGroup(targetGroupName, dest_tg_prefix)
+console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
+      newTgs.push(newTg)
+      destTargetGroupArn = newTg.TargetGroupArn
+    } else {
+      destTargetGroupArn = existingTg.TargetGroupArn
+    }    
+  }
+
+  let newListnerParam = {}
+  Object.assign(newListnerParam, listner)
+  delete newListnerParam.ListenerArn
+
+
+
 }

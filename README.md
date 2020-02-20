@@ -21,7 +21,7 @@ npm install
 
 3. Execute the script
 ```
-node . > test.log
+node index.js > test.log
 ```
 
 ## Delete created resource
