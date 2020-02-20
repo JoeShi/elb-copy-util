@@ -148,13 +148,13 @@ async function copyRules(src_lb_listener_arn, dest_lb_listener_arn, dest_tg_pref
 
 console.log(`rules in source lb listener...\n${JSON.stringify(src_rules)}\n\n`)
 
-
   for (let i = 0; i < src_rules.length; i++) {
     const src_rule = src_rules[i]
 
 console.log(`src rule...\n${JSON.stringify(src_rule)}\n\n`)
 
-    if (src_rule.Actions[0].Type === 'forward') {                               // If the action type if foward
+    // Handle non-default and forward action
+    if (src_rule.Actions[0].Type === 'forward' && src_rule.IsDefault === false) {                               
       const targetGroupName = src_rule.Actions[0].TargetGroupArn.split('/')[1]
       let destTargetGroupArn = ''
 
@@ -178,8 +178,20 @@ console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
 
       delete newRuleParam.RuleArn
       delete newRuleParam.IsDefault
-      delete newRuleParam.Actions[0].ForwardConfig
-      delete newRuleParam.Conditions[0].HostHeaderConfig
+      
+      // Delete the config
+      if (newRuleParam.Actions[0].ForwardConfig) {
+        delete newRuleParam.Actions[0].ForwardConfig
+      }
+
+      if (newRuleParam.Conditions[0].HostHeaderConfig) {
+        delete newRuleParam.Conditions[0].HostHeaderConfig
+      }
+
+      if (newRuleParam.Conditions[0].PathPatternConfig) {
+        delete newRuleParam.Conditions[0].PathPatternConfig
+      }
+      
       newRuleParam.Actions[0].TargetGroupArn = destTargetGroupArn
       newRuleParam.ListenerArn = dest_lb_listener_arn
 

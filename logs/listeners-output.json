@@ -1,0 +1,21 @@
+{
+    "Listeners": [
+        {
+            "ListenerArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795",
+            "LoadBalancerArn": "arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:loadbalancer/app/cloudkong-xyz/dae92038e098fc53",
+            "Port": 80,
+            "Protocol": "HTTP",
+            "DefaultActions": [
+                {
+                    "Type": "fixed-response",
+                    "Order": 1,
+                    "FixedResponseConfig": {
+                        "MessageBody": "Unknown host name",
+                        "StatusCode": "503",
+                        "ContentType": "text/plain"
+                    }
+                }
+            ]
+        }
+    ]
+}

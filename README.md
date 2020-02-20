@@ -23,3 +23,8 @@ npm install
 ```
 node . > test.log
 ```
+
+## Delete created resource
+
+* Delete the listener
+* In **Target Groups**, filter all the created target groups using value of `DEST_TG_PREFIX` in **index.js**
