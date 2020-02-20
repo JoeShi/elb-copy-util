@@ -1,0 +1,53 @@
+rules in source lb listener...
+[{"RuleArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener-rule/app/test-copy/538f066c2647858b/bde3b89de0e8d28e/dc3179e6f550e88a","Priority":"1","Conditions":[{"Field":"path-pattern","Values
+":["/test22"],"PathPatternConfig":{"Values":["/test22"]}}],"Actions":[{"Type":"redirect","Order":1,"RedirectConfig":{"Protocol":"HTTPS","Port":"#{port}","Host":"#{host}","Path":"/#{path}","Query":"#{query}","St
+atusCode":"HTTP_302"}}],"IsDefault":false},{"RuleArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener-rule/app/test-copy/538f066c2647858b/bde3b89de0e8d28e/d5323f6795740486","Priority":"2","Co
+nditions":[{"Field":"path-pattern","Values":["/test*"],"PathPatternConfig":{"Values":["/test*"]}}],"Actions":[{"Type":"forward","TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetg
+roup/test-tg/d7460b8383f61964","Order":1,"ForwardConfig":{"TargetGroups":[{"TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/test-tg/d7460b8383f61964","Weight":1}],"TargetGr
+oupStickinessConfig":{"Enabled":false}}}],"IsDefault":false},{"RuleArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener-rule/app/test-copy/538f066c2647858b/bde3b89de0e8d28e/53f75680cf383afa",
+"Priority":"default","Conditions":[],"Actions":[{"Type":"forward","TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/test-tg/d7460b8383f61964","ForwardConfig":{"TargetGroups"
+:[{"TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/test-tg/d7460b8383f61964","Weight":1}],"TargetGroupStickinessConfig":{"Enabled":false}}}],"IsDefault":true}]
+
+
+src rule...
+{"RuleArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener-rule/app/test-copy/538f066c2647858b/bde3b89de0e8d28e/dc3179e6f550e88a","Priority":"1","Conditions":[{"Field":"path-pattern","Values"
+:["/test22"],"PathPatternConfig":{"Values":["/test22"]}}],"Actions":[{"Type":"redirect","Order":1,"RedirectConfig":{"Protocol":"HTTPS","Port":"#{port}","Host":"#{host}","Path":"/#{path}","Query":"#{query}","Sta
+tusCode":"HTTP_302"}}],"IsDefault":false}
+
+
+src rule...
+{"RuleArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener-rule/app/test-copy/538f066c2647858b/bde3b89de0e8d28e/d5323f6795740486","Priority":"2","Conditions":[{"Field":"path-pattern","Values"
+:["/test*"],"PathPatternConfig":{"Values":["/test*"]}}],"Actions":[{"Type":"forward","TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/test-tg/d7460b8383f61964","Order":1,"F
+orwardConfig":{"TargetGroups":[{"TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/test-tg/d7460b8383f61964","Weight":1}],"TargetGroupStickinessConfig":{"Enabled":false}}}],"
+IsDefault":false}
+
+
+created new target group...
+{"TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/demo-tg-test-tg/9890cccf97c32f35","TargetGroupName":"demo-tg-test-tg","Protocol":"HTTP","Port":80,"VpcId":"vpc-b87258df","
+HealthCheckProtocol":"HTTP","HealthCheckPort":"traffic-port","HealthCheckEnabled":true,"HealthCheckIntervalSeconds":30,"HealthCheckTimeoutSeconds":5,"HealthyThresholdCount":5,"UnhealthyThresholdCount":2,"Health
+CheckPath":"/","Matcher":{"HttpCode":"200"},"LoadBalancerArns":[],"TargetType":"instance"}
+
+
+new rule param...
+{"Priority":"2","Conditions":[{"Field":"path-pattern","Values":["/test*"]}],"Actions":[{"Type":"forward","TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/demo-tg-test-tg/98
+90cccf97c32f35","Order":1}],"ListenerArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener/app/test-copy2/46c991ea95c8378c/1ee14e2ee3be6911"}
+
+
+created new rule...
+{"RuleArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener-rule/app/test-copy2/46c991ea95c8378c/1ee14e2ee3be6911/9b92398ef5d92983","Priority":"2","Conditions":[{"Field":"path-pattern","Values
+":["/test*"],"PathPatternConfig":{"Values":["/test*"]}}],"Actions":[{"Type":"forward","TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/demo-tg-test-tg/9890cccf97c32f35","Or
+der":1,"ForwardConfig":{"TargetGroups":[{"TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/demo-tg-test-tg/9890cccf97c32f35","Weight":1}],"TargetGroupStickinessConfig":{"Ena
+bled":false}}}],"IsDefault":false}
+
+
+src rule...
+{"RuleArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener-rule/app/test-copy/538f066c2647858b/bde3b89de0e8d28e/53f75680cf383afa","Priority":"default","Conditions":[],"Actions":[{"Type":"forw
+ard","TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/test-tg/d7460b8383f61964","ForwardConfig":{"TargetGroups":[{"TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeas
+t-1:751675971169:targetgroup/test-tg/d7460b8383f61964","Weight":1}],"TargetGroupStickinessConfig":{"Enabled":false}}}],"IsDefault":true}
+
+
+copied rules...
+[{"RuleArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:listener-rule/app/test-copy2/46c991ea95c8378c/1ee14e2ee3be6911/9b92398ef5d92983","Priority":"2","Conditions":[{"Field":"path-pattern","Value
+s":["/test*"],"PathPatternConfig":{"Values":["/test*"]}}],"Actions":[{"Type":"forward","TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/demo-tg-test-tg/9890cccf97c32f35","O
+rder":1,"ForwardConfig":{"TargetGroups":[{"TargetGroupArn":"arn:aws:elasticloadbalancing:ap-southeast-1:751675971169:targetgroup/demo-tg-test-tg/9890cccf97c32f35","Weight":1}],"TargetGroupStickinessConfig":{"En
+abled":false}}}],"IsDefault":false}]
