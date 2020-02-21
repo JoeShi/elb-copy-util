@@ -4,20 +4,22 @@ const SRC_LB_LISTENER_ARN = process.env.SRC_LB_LISTENER_ARN || 'arn:aws-cn:elast
 const DEST_LB_LISTENER_ARN = process.env.DEST_LB_LISTENER_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener/app/demo-lb/48872b1662c5d6ff/ca45dc835b7cb732'
 const DEST_LB_ARN = process.env.DEST_LB_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:loadbalancer/app/demo-lb/48872b1662c5d6ff'
 const DEST_TG_PREFIX = process.env.DEST_TG_PREFIX || 'copied-tg'
+const SRC_TG_PREFIX = process.env.SRC_TG_PREFIX
 const PAGE_SIZE = 10
 const AWS_REGION = process.env.AWS_REGION || 'cn-northwest-1'
 const AWS_PROFILE = process.env.AWS_PROFILE
 
 const AWS = require('aws-sdk')
 
-AWS.config.update({
-  region: AWS_REGION
-})
-
 if (AWS_PROFILE) {
   const credentials = new AWS.SharedIniFileCredentials({profile: AWS_PROFILE})
   AWS.config.update({
-    credentials: credentials
+    credentials: credentials,
+    region: AWS_REGION
+  })
+} else {
+  AWS.config.update({
+    region: AWS_REGION
   })
 }
 
@@ -30,7 +32,7 @@ if (DEST_LB_ARN) {
   // Option 1: copy listener and copy rules
   copyListener(SRC_LB_LISTENER_ARN, DEST_LB_ARN).then(listner => {
     console.log(`created listener...\n${JSON.stringify(listner)}\n\n`)
-    return copyRules(SRC_LB_LISTENER_ARN, listner.ListenerArn, DEST_TG_PREFIX)
+    return copyRules(SRC_LB_LISTENER_ARN, listner.ListenerArn)
   }).then(rules => {
     console.log(`copied rules...\n${JSON.stringify(rules)}\n\n`)
   }).catch(err => {
@@ -38,7 +40,7 @@ if (DEST_LB_ARN) {
   })
 } else if (DEST_LB_LISTENER_ARN) {
   // Option 2: copy rules only
-  copyRules(SRC_LB_LISTENER_ARN, DEST_LB_LISTENER_ARN, DEST_TG_PREFIX).then(rules => {
+  copyRules(SRC_LB_LISTENER_ARN, DEST_LB_LISTENER_ARN).then(rules => {
     console.log(`copied rules...\n${JSON.stringify(rules)}\n\n`)
   }).catch(err => {
     console.error(err)
@@ -113,20 +115,43 @@ async function copyTargetGroups(src_lb_arn, new_tg_prefix) {
 /**
  * Copy a single Target Group and return the TG object.
  * @param {String} src_tg_name 
- * @param {String} dest_tg_name 
+ * @param {String} dest_tg_prefix
+ * @param {String} src_tg_prefix
  */
-async function copyTargetGroup(src_tg_name, dest_tg_prefix) {
+async function copyTargetGroup(src_tg_name, dest_tg_prefix, src_tg_prefix) {
   const tgs_res = await elbv2.describeTargetGroups({ Names: [src_tg_name ]}).promise()
   const tg = tgs_res.TargetGroups[0]
   let newTgParam = {}
   Object.assign(newTgParam, tg)
-  newTgParam.Name = `${dest_tg_prefix}-${newTgParam.TargetGroupName}`
+
+  newTgParam.Name = getCopiedTargetGroupName(src_tg_name, dest_tg_prefix, src_tg_prefix)
+
   delete newTgParam.TargetGroupName
   delete newTgParam.TargetGroupArn
   delete newTgParam.LoadBalancerArns
 
   const create_tg_res = await elbv2.createTargetGroup(newTgParam).promise()
   return create_tg_res.TargetGroups[0]
+}
+
+/**
+ * Get the copied target group name. If parameter src_tg_prefix is provided and its value equal to src_tag_name prefix. 
+ * The function will replace the prefix. Otherwise, it will add value of dest_tag_prefix to the src_tag_name.
+ * 
+ * @param {String} src_tg_name Source target group name
+ * @param {*} dest_tg_prefix Destination target group prefix. e.g. abc-target-group, abc is the prefix
+ * @param {*} src_tg_prefix Source target group prefix. 
+ */
+function getCopiedTargetGroupName(src_tg_name, dest_tg_prefix, src_tg_prefix) {
+
+  let tg_name_arrray = src_tg_name.split('-');
+  if (src_tg_prefix && tg_name_arrray.length > 1 && tg_name_arrray[0] === src_tg_prefix) {
+    tg_name_arrray[0] = dest_tg_prefix
+  } else {
+    tg_name_arrray.unshift(dest_tg_prefix)
+  }
+
+  return tg_name_arrray.join('-')
 }
 
 /**
@@ -183,12 +208,12 @@ async function copyRules(src_lb_listener_arn, dest_lb_listener_arn) {
 
       // Find the related target group
       const existingTg = newTgs.find(tg => {
-        return tg.TargetGroupName === `${DEST_TG_PREFIX}-${targetGroupName}`
+        return tg.TargetGroupName === getCopiedTargetGroupName(targetGroupName, DEST_TG_PREFIX, SRC_TG_PREFIX)
       })
 
       // if not exist, create a new target group
       if (!existingTg) {
-        const newTg = await copyTargetGroup(targetGroupName, DEST_TG_PREFIX)
+        const newTg = await copyTargetGroup(targetGroupName, DEST_TG_PREFIX, SRC_TG_PREFIX)
         console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
         newTgs.push(newTg)
         destTargetGroupArn = newTg.TargetGroupArn
@@ -234,12 +259,12 @@ async function copyListener(src_lb_listener_arn, dest_lb_arn) {
     const targetGroupName = listner.DefaultActions[0].TargetGroupArn.split('/')[1]
     // Find the related target group
     const existingTg = newTgs.find(tg => {
-      return tg.TargetGroupName === `${DEST_TG_PREFIX}-${targetGroupName}`
+      return tg.TargetGroupName === getCopiedTargetGroupName(targetGroupName, DEST_TG_PREFIX, SRC_TG_PREFIX)
     })
 
     // if not exist, create a new target group
     if (!existingTg) {
-      const newTg = await copyTargetGroup(targetGroupName, DEST_TG_PREFIX)
+      const newTg = await copyTargetGroup(targetGroupName, DEST_TG_PREFIX, SRC_TG_PREFIX)
       console.log(`created new target group...\n${JSON.stringify(newTg)}\n\n`)
       newTgs.push(newTg)
       destTargetGroupArn = newTg.TargetGroupArn
