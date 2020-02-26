@@ -5,8 +5,10 @@ const DEST_LB_LISTENER_ARN = process.env.DEST_LB_LISTENER_ARN || 'arn:aws-cn:ela
 const DEST_LB_ARN = process.env.DEST_LB_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:loadbalancer/app/demo-lb/48872b1662c5d6ff'
 const DEST_TG_PREFIX = process.env.DEST_TG_PREFIX || 'copied-tg'
 const SRC_TG_PREFIX = process.env.SRC_TG_PREFIX
+const DEST_VPC_ID = process.env.DEST_VPC_ID
 const PAGE_SIZE = 10
 const AWS_REGION = process.env.AWS_REGION || 'cn-northwest-1'
+const AWS_SRC_REGION = process.env.AWS_SRC_REGION || 'cn-north-1'
 const AWS_PROFILE = process.env.AWS_PROFILE
 
 const AWS = require('aws-sdk')
@@ -24,6 +26,7 @@ if (AWS_PROFILE) {
 }
 
 const elbv2 = new AWS.ELBv2()
+const elbv2_src = AWS_SRC_REGION ? new AWS.ELBv2({region: AWS_SRC_REGION}) : elbv2
 
 // Auto created target groups
 const newTgs = []
@@ -55,7 +58,7 @@ if (DEST_LB_ARN) {
  * @returns {Object} Load Balancer Object
  */
 async function copyLoadBalancer(src_lb_arn, dest_lb_name) {
-  const lb_res = await elbv2.describeLoadBalancers({
+  const lb_res = await elbv2_src.describeLoadBalancers({
     LoadBalancerArns: [ src_lb_arn ]
   }).promise()
 
@@ -84,42 +87,13 @@ async function copyLoadBalancer(src_lb_arn, dest_lb_name) {
 }
 
 /**
- * Copy existing target groups from LB and create new target groups
- * 
- * @deprecated
- * @param {String} src_lb_arn Source Load Balancer ARN
- * @param {String} new_tg_prefix The prefix of newly created target group
- */
-async function copyTargetGroups(src_lb_arn, new_tg_prefix) {
-  const tgs_res = await elbv2.describeTargetGroups({ LoadBalancerArn: src_lb_arn }).promise()
-  const tgs = tgs_res.TargetGroups
-  const newTgs = []
-
-  for (let i = 0; i < tgs.length; i++) {
-    const tg = tgs[i]
-    tg.Name = `${new_tg_prefix}-${tg.TargetGroupName}`
-    delete tg.TargetGroupName
-    delete tg.TargetGroupArn
-    delete tg.LoadBalancerArns
-
-    const create_tg_res = await elbv2.createTargetGroup(tg).promise()
-    
-    newTgs.push(create_tg_res.TargetGroups[0])
-  }
-
-  return { oldTgs: tgs, newTgs: newTgs }
-}
-
-
-
-/**
  * Copy a single Target Group and return the TG object.
  * @param {String} src_tg_name 
  * @param {String} dest_tg_prefix
  * @param {String} src_tg_prefix
  */
 async function copyTargetGroup(src_tg_name, dest_tg_prefix, src_tg_prefix) {
-  const tgs_res = await elbv2.describeTargetGroups({ Names: [src_tg_name ]}).promise()
+  const tgs_res = await elbv2_src.describeTargetGroups({ Names: [src_tg_name ]}).promise()
   const tg = tgs_res.TargetGroups[0]
   let newTgParam = {}
   Object.assign(newTgParam, tg)
@@ -129,6 +103,10 @@ async function copyTargetGroup(src_tg_name, dest_tg_prefix, src_tg_prefix) {
   delete newTgParam.TargetGroupName
   delete newTgParam.TargetGroupArn
   delete newTgParam.LoadBalancerArns
+  
+  if (DEST_VPC_ID) {
+    newTgParam.VpcId = DEST_VPC_ID
+  }
 
   const create_tg_res = await elbv2.createTargetGroup(newTgParam).promise()
   return create_tg_res.TargetGroups[0]
@@ -168,7 +146,7 @@ async function copyRules(src_lb_listener_arn, dest_lb_listener_arn) {
 
   // 1. Iterate and get all existing rules in source listener
   while (hasMoreRule) {
-    const rules_res = await elbv2.describeRules({ ListenerArn: src_lb_listener_arn, PageSize: PAGE_SIZE, Marker: marker }).promise()
+    const rules_res = await elbv2_src.describeRules({ ListenerArn: src_lb_listener_arn, PageSize: PAGE_SIZE, Marker: marker }).promise()
     src_rules = src_rules.concat(rules_res.Rules)
     marker = rules_res.NextMarker
     if (rules_res.Rules.length < PAGE_SIZE ) {
@@ -247,7 +225,7 @@ async function copyRules(src_lb_listener_arn, dest_lb_listener_arn) {
  */
 async function copyListener(src_lb_listener_arn, dest_lb_arn) {
   
-  const listeners_res = await elbv2.describeListeners({ ListenerArns: [ src_lb_listener_arn] }).promise()
+  const listeners_res = await elbv2_src.describeListeners({ ListenerArns: [ src_lb_listener_arn] }).promise()
   const listner = listeners_res.Listeners[0]
   let newListnerParam = listner
   Object.assign(newListnerParam, listner)

@@ -29,7 +29,9 @@ npm install
   DEST_LB_ARN=dest-lb-arn \  
   DEST_TG_PREFIX=copied-tg \          # Prefix for the new created target groups
   SRC_TG_PREFIX=src-tg \              # Source target group prefix
-  AWS_REGION=cn-northwest-1 \         # AWS region
+  DEST_VPC_ID=dest-vpc-id             # Dest VPC ID
+  AWS_REGION=cn-north-1 \             # AWS region
+  AWS_SRC_REGION=cn-northwest-1       # AWS Source Load Balancer Region
   AWS_PROFILE=zhy \                   # omit this parameter if using default profile
   node index.js > test.log
   ```
@@ -39,8 +41,10 @@ npm install
   SRC_LB_LISTENER_ARN=src-lb-listner-arn \
   DEST_LB_LISTENER_ARN=dest-lb-listner-arn \
   DEST_TG_PREFIX=copied-tg \          # Prefix for the new created target groups
-  SRC_TG_PREFIX=src-tg \            # Source target group prefix
-  AWS_REGION=cn-northwest-1 \         # AWS region
+  SRC_TG_PREFIX=src-tg \              # Source target group prefix
+  DEST_VPC_ID=dest-vpc-id             # Dest VPC ID
+  AWS_REGION=cn-north-1 \             # AWS region
+  AWS_SRC_REEGION=cn-northwest-1 \    # AWS Source Load Balancer Region
   AWS_PROFILE=zhy \                   # omit this parameter if using default profile
   node index.js > test.log
   ```
