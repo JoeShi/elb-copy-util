@@ -170,13 +170,18 @@ async function copyRules(src_lb_listener_arn, dest_lb_listener_arn) {
       delete newRuleParam.Actions[0].ForwardConfig
     }
 
-    if (newRuleParam.Conditions[0].HostHeaderConfig) {
-      delete newRuleParam.Conditions[0].HostHeaderConfig
+    if (newRuleParam.Conditions && newRuleParam.Conditions.length > 0) {
+      for (let i = 0; i < newRuleParam.Conditions.length; i++) {
+        if (newRuleParam.Conditions[i].HostHeaderConfig) {
+          delete newRuleParam.Conditions[i].HostHeaderConfig
+        }
+    
+        if (newRuleParam.Conditions[i].PathPatternConfig) {
+          delete newRuleParam.Conditions[i].PathPatternConfig
+        }
+      }
     }
 
-    if (newRuleParam.Conditions[0].PathPatternConfig) {
-      delete newRuleParam.Conditions[0].PathPatternConfig
-    }
     newRuleParam.ListenerArn = dest_lb_listener_arn
 
     // Handle non-default and forward action
