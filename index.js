@@ -2,7 +2,7 @@
 
 const SRC_LB_ARN = process.env.SRC_LB_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:loadbalancer/app/test/8fed6ea150d25995'
 
-const SRC_LB_LISTENER_ARN = process.env.SRC_LB_LISTENER_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:listener/app/test/8fed6ea150d25995/8f371ac42fe365e1'
+//const SRC_LB_LISTENER_ARN = process.env.SRC_LB_LISTENER_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:listener/app/test/8fed6ea150d25995/8f371ac42fe365e1'
 //const DEST_LB_LISTENER_ARN = process.env.DEST_LB_LISTENER_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:loadbalancer/app/test-replica/112b85d665911f8a'
 const DEST_LB_ARN = process.env.DEST_LB_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:loadbalancer/app/test-replica/112b85d665911f8a'
 const DEST_TG_PREFIX = process.env.DEST_TG_PREFIX || 'copied-tg'
@@ -38,9 +38,6 @@ const newTgs = []
 if (DEST_LB_ARN) {
   // Option 1: copy listener and copy rules
 
-  //  while 循环， 对每个listener 执行复制。
-
-
 
  var params = {
   LoadBalancerArn: SRC_LB_ARN,
@@ -56,9 +53,11 @@ elbv2.describeListeners(params, function(err, data) {
     //console.log(data['Listeners'].length);
 
     var i=0;
+    // while 循环， 对每个listener 执行复制。
     while (i< data['Listeners'].length){
-        console.log(data['Listeners'][i]['ListenerArn']);
-        copyListener(data['Listeners'][i]['ListenerArn'], DEST_LB_ARN).then(listner => {
+        //console.log(data['Listeners'][i]['ListenerArn']);
+        const SRC_LB_LISTENER_ARN= data['Listeners'][i]['ListenerArn'];
+        copyListener(SRC_LB_LISTENER_ARN, DEST_LB_ARN).then(listner => {
         console.log(`created listener...\n${JSON.stringify(listner)}\n\n`)
         return copyRules(SRC_LB_LISTENER_ARN, listner.ListenerArn)
       }).then(rules => {
@@ -72,7 +71,6 @@ elbv2.describeListeners(params, function(err, data) {
    }
 
  });
-
 
 
 } else if (DEST_LB_LISTENER_ARN) {
