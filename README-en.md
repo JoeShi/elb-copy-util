@@ -1,35 +1,37 @@
-# AWS ELB 复制工具
+# AWS ELB Copy Tool
 
-目前支持复制一个LB的所有target group, listener和rules，或者复制单个listener下的rule。
+The tool supports the replication of a certain LB, or copy only a certain listener of one LB.
 
 
-## 前提条件
-* 本地安装 Node.js
-* 配置 AWS Profile
-* 创建一个空的目标 LB (无listener）
 
-## 使用方法
+## Prerequites
 
-### 1. 安装依赖
+* install node.js
+* Configure your AWS Profile
+* create an empty target LB 
+
+## Usage 
+
+### 1. Install dependencies
 ```
 npm install
 ```
 
-### 2. 配置
+### 2. Configure
 
-  **选项 1: 复制整个LB的target group, listeners & Rules**
+  **Option 1: Copy both LB's listeners & Rules**
   
-* SRC_LB_ARN : 来源端的LB ARN
-* （在此选项下，无需定义）SRC_LB_LISTENER_ARN: 来源端 Listener ARN
-* DEST_LB_ARN: 目标 LB ARN
-* （在此选项下，无需定义）DEST_LB_LISTENER_ARN: 目标listener ARN。如果提供了的话，会直接忽略 `DEST_LB_ARN`，只复制此listener。
-* DEST_TG_PREFIX: 前缀tag
-* SRC_TG_PREFIX: 来源段前缀tag
-* AWS_REGION: AWS 区域
-* AWS_PROFILE: AWS profile. 如果用的是default profile或者是IAM role，就不用再定义。
+* SRC_LB_ARN : source load balancer ARN 
+* （ignore）SRC_LB_LISTENER_ARN: Source load balancer listener ARN 
+* DEST_LB_ARN: Dest load balancer ARN 
+* （ignore）DEST_LB_LISTENER_ARN: Dest load balancer listener ARN. If this provided, it will ignore `DEST_LB_ARN`, and only copy listener rules. Note: the default rule will be ignored if only copy rules.
+* DEST_TG_PREFIX: Dest target group prefix 
+* SRC_TG_PREFIX: Source target group prefix 
+* AWS_REGION: AWS region
+* AWS_PROFILE: AWS profile. 
 
 ```
-# 示例配置
+# Example Configuration
 
 const SRC_LB_ARN = process.env.SRC_LB_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:12345678910:loadbalancer/app/test/8fed6ea150d25995'
 //const SRC_LB_LISTENER_ARN = process.env.SRC_LB_LISTENER_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:12345678910:listener/app/test/8fed6ea150d25995/8f371ac42fe365e1'
@@ -45,9 +47,9 @@ const AWS_PROFILE = process.env.AWS_PROFILE  #如果用的是default的话
 
 ```
 
-  **Option 2: 只复制某个 listener 的 rules**
+  **Option 2: Only copy certain listener's rules**
   ```
-  # 示例配置
+  # Example configuration
   SRC_LB_LISTENER_ARN=src-lb-listner-arn \
   DEST_LB_LISTENER_ARN=dest-lb-listner-arn \
   DEST_TG_PREFIX=copied-tg \          # Prefix for the new created target groups
@@ -56,16 +58,15 @@ const AWS_PROFILE = process.env.AWS_PROFILE  #如果用的是default的话
   AWS_REGION=cn-north-1 \             # AWS region
   AWS_SRC_REEGION=cn-northwest-1 \    # AWS Source Load Balancer Region
   AWS_PROFILE=zhy \                   # omit this parameter if using default profile
-  node index.js > test.log
   ```
 
-### 3. 执行脚本
+### 3. Execute the script
 ```
-node index.js
+node index.js  > test.log
 
 ```
 
-## 删除创建的资源
+## Delete created resource
 
-* 先删除listener
-* 在 **Target Groups** 下, 过滤晒出安出使用 `DEST_TG_PREFIX` tag 的并进行删除。
+* Delete the listener
+* In **Target Groups**, filter all the created target groups using value of `DEST_TG_PREFIX` in **index.js**

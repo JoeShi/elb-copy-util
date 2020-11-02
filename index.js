@@ -1,15 +1,18 @@
 'use strict'
 
-const SRC_LB_LISTENER_ARN = process.env.SRC_LB_LISTENER_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener/app/cloudkong-xyz/dae92038e098fc53/c536d37bf7a2a795'
-const DEST_LB_LISTENER_ARN = process.env.DEST_LB_LISTENER_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:listener/app/demo-lb/48872b1662c5d6ff/ca45dc835b7cb732'
-const DEST_LB_ARN = process.env.DEST_LB_ARN || 'arn:aws-cn:elasticloadbalancing:cn-northwest-1:057005827724:loadbalancer/app/demo-lb/48872b1662c5d6ff'
+const SRC_LB_ARN = process.env.SRC_LB_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:loadbalancer/app/test/8fed6ea150d25995'
+
+//const SRC_LB_LISTENER_ARN = process.env.SRC_LB_LISTENER_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:listener/app/test/8fed6ea150d25995/8f371ac42fe365e1'
+//const DEST_LB_LISTENER_ARN = process.env.DEST_LB_LISTENER_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:loadbalancer/app/test-replica/112b85d665911f8a'
+const DEST_LB_ARN = process.env.DEST_LB_ARN || 'arn:aws:elasticloadbalancing:ap-northeast-1:764444585758:loadbalancer/app/test-replica/112b85d665911f8a'
 const DEST_TG_PREFIX = process.env.DEST_TG_PREFIX || 'copied-tg'
-const SRC_TG_PREFIX = process.env.SRC_TG_PREFIX
-const DEST_VPC_ID = process.env.DEST_VPC_ID
+const SRC_TG_PREFIX = process.env.SRC_TG_PREFIX || 'test-nginx'
+const DEST_VPC_ID = process.env.DEST_VPC_ID || 'vpc-fe4c0d9a'
 const PAGE_SIZE = 10
-const AWS_REGION = process.env.AWS_REGION || 'cn-northwest-1'
-const AWS_SRC_REGION = process.env.AWS_SRC_REGION || 'cn-north-1'
+const AWS_REGION = process.env.AWS_REGION || 'ap-northeast-1'
+const AWS_SRC_REGION = process.env.AWS_SRC_REGION || 'ap-northeast-1'
 const AWS_PROFILE = process.env.AWS_PROFILE
+
 
 const AWS = require('aws-sdk')
 
@@ -31,16 +34,45 @@ const elbv2_src = AWS_SRC_REGION ? new AWS.ELBv2({region: AWS_SRC_REGION}) : elb
 // Auto created target groups
 const newTgs = []
 
+
 if (DEST_LB_ARN) {
   // Option 1: copy listener and copy rules
-  copyListener(SRC_LB_LISTENER_ARN, DEST_LB_ARN).then(listner => {
-    console.log(`created listener...\n${JSON.stringify(listner)}\n\n`)
-    return copyRules(SRC_LB_LISTENER_ARN, listner.ListenerArn)
-  }).then(rules => {
-    console.log(`copied rules...\n${JSON.stringify(rules)}\n\n`)
-  }).catch(err => {
-    console.error(err)
-  })
+
+
+ var params = {
+  LoadBalancerArn: SRC_LB_ARN,
+  //Marker: 'STRING_VALUE',
+  PageSize: '100'
+};
+
+//列出所有的listener
+elbv2.describeListeners(params, function(err, data) {
+   if (err) console.log(err, err.stack); // an error occurred
+   else  {
+    //console.log(data['Listeners']);           // successful response
+    //console.log(data['Listeners'].length);
+
+    var i=0;
+    // while 循环， 对每个listener 执行复制。
+    while (i< data['Listeners'].length){
+        //console.log(data['Listeners'][i]['ListenerArn']);
+        const SRC_LB_LISTENER_ARN= data['Listeners'][i]['ListenerArn'];
+        copyListener(SRC_LB_LISTENER_ARN, DEST_LB_ARN).then(listner => {
+        console.log(`created listener...\n${JSON.stringify(listner)}\n\n`)
+        return copyRules(SRC_LB_LISTENER_ARN, listner.ListenerArn)
+      }).then(rules => {
+        console.log(`copied rules...\n${JSON.stringify(rules)}\n\n`)
+      }).catch(err => {
+        console.error(err)
+      })
+        i++;
+    }
+
+   }
+
+ });
+
+
 } else if (DEST_LB_LISTENER_ARN) {
   // Option 2: copy rules only
   copyRules(SRC_LB_LISTENER_ARN, DEST_LB_LISTENER_ARN).then(rules => {
